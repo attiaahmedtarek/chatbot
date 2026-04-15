@@ -1,30 +1,33 @@
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
 model_name = "facebook/blenderbot-400M-distill"
-# Load model (download on first run and reference local installation for consequent runs)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+
+print("Loading tokenizer...")
 tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+print("Loading model...")
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+
+print("Chatbot is ready. Type 'quit' to exit.\n")
+
 conversation_history = []
 
-
 while True:
-    # Create conversation history string
-    history_string = "\n".join(conversation_history)
+    input_text = input("You: ")
 
-    # Get the input data from the user
-    input_text = input("> ")
+    if input_text.lower() in ["quit", "exit"]:
+        print("Goodbye!")
+        break
 
-    # Tokenize the input text and history
-    inputs = tokenizer.encode_plus(history_string, input_text, return_tensors="pt")
+    conversation_history.append("User: " + input_text)
 
-    # Generate the response from the model
-    outputs = model.generate(**inputs)
+    # BlenderBot usually works best with the latest message
+    inputs = tokenizer([input_text], return_tensors="pt")
 
-    # Decode the response
+    outputs = model.generate(**inputs, max_new_tokens=60)
+
     response = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
-    
-    print(response)
 
-    # Add interaction to conversation history
-    conversation_history.append(input_text)
-    conversation_history.append(response)
+    print("Bot:", response)
 
+    conversation_history.append("Bot: " + response)
